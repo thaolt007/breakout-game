@@ -11,12 +11,14 @@ var cvH = canvas.height;
 var paddleWidth = 100; var paddleHeight = 10;
 var paddleX = Math.ceil(Math.random()*cvW);
 var right = false; var left = false;
-var paddleMove = 5;
+var paddleMove = 15;
 // ball
-var dx = 2; var dy = -2; // hướng di chuyển: lên trên bên phải
-var x = paddleX + paddleWidth/2; // vị trí x của quả bóng
-var y = cvH - paddleHeight; // vị trí y của quả bóng
-var radius = 10;
+var dx = 7; var dy = -7; // hướng di chuyển: lên trên bên phải
+var x = cvW/2; // vị trí x của quả bóng
+var y = cvH/2; // vị trí y của quả bóng
+var radius = 30;
+var ball = new Image();
+ball.src = "https://goo.gl/7QuhZ4";
 // brick
 var brickWidth = 75;
 var brickHeight = 20;
@@ -28,11 +30,19 @@ var brickLeftOffset = 28;
 var bricks = [];
 // scores
 var score = 0;
+// level
+var level = 1;
+var maxLevel = 5;
+// live
+var live = 3;
 
-for(var r = 0; r < brickRow; r++) {
-    bricks[r] = [];
-    for(var c = 0; c < brickColumn; c++) {
-        bricks[r][c] = {x:0, y:0, state:1}; // state=1: vẫn còn; state=0: đã mất
+initBricks();
+function initBricks() {
+    for(var r = 0; r < brickRow; r++) {
+        bricks[r] = [];
+        for(var c = 0; c < brickColumn; c++) {
+            bricks[r][c] = {x:0, y:0, state:1}; // state=1: vẫn còn; state=0: đã mất
+        }
     }
 }
 
@@ -74,6 +84,7 @@ function drawBall() {
     ctx.fillStyle = 'blue';
     ctx.fill();
     ctx.closePath();
+    //ctx.drawImage(ball, x, y, radius, radius);
 }
 // Vẽ tấm ván ở dưới
 function drawPaddle() {
@@ -83,7 +94,7 @@ function drawPaddle() {
     ctx.closePath();
 }
 
-function isGameOver() {
+function isLose() {
     if(y + radius >= cvH) {
         if(x + radius < paddleX || x > paddleX + paddleWidth){
             score = 0;
@@ -117,17 +128,43 @@ function collisionDectect() {
 
 function drawScore() {
     ctx.beginPath();
+    ctx.fillStyle = 'blue';
     ctx.fillText('Score: '+score.toString(), brickLeftOffset, brickTopOffset-5);
-    ctx.fillStyle = 'red';
     ctx.font = '20pt Arial';
     ctx.closePath();
 }
+// Bắt di chuột
+document.addEventListener('mousemove', mouseMoveHandler);
+function mouseMoveHandler(e) {
+    var mouseX = e.clientX - canvas.offsetLeft;
+    if (mouseX > 0 && mouseX < cvW) {
+        paddleX = mouseX - paddleWidth/2;
+    }
+}
+function drawLevel() {
+    ctx.beginPath();
+    ctx.fillStyle = 'red';
+    ctx.fillText('Level: '+level.toString(), cvW/2-45, brickTopOffset-5);
+    ctx.font = '20pt Arial';
+    ctx.closePath();
+}
+
+function drawLive() {
+    ctx.beginPath();
+    ctx.fillStyle = 'blue';
+    ctx.fillText('Lives: '+live.toString(), cvW-115, brickTopOffset-5);
+    ctx.font = '20pt Arial';
+    ctx.closePath();
+}
+
 function draw() {
     ctx.clearRect(0, 0, cvW, cvH);
-    drawScore();
     drawBall();
     drawPaddle();
     drawBricks();
+    drawScore();
+    drawLevel();
+    drawLive();
     x += dx;
     y += dy;
     collisionDectect();
@@ -145,20 +182,41 @@ function draw() {
     if(left && paddleX > 0) paddleX -= paddleMove;
     else if(paddleX < paddleMove) paddleX = 0;
 
-    if(isGameOver()) {
-        console.log("Game Over");
-        //alert("Game over");
-        clearInterval(game);
-        document.location.reload();
+    if(isLose()) {
+        live--;
+        initBricks();
+        if(!live) {
+            alert("Game over");
+            reloadGame();
+        }
     }
     if(isWin()) {
-        console.log("You Win");
-        alert("You Win!");
-        clearInterval(game);
-        document.location.reload();
+        console.log("Win");
+        score = 0;
+        dx = (dx < 0) ? dx-=2 : dx+=2;
+        dy = (dy < 0) ? dy-=2 : dy+=2;
+        if(level == maxLevel) {
+            alert("You Win!");
+            reloadGame();
+        }else {
+            initBricks();
+            ++level;
+        }
+        //document.location.reload();
     }
+    requestAnimationFrame(draw);
 }
-
-var game = setInterval(draw, 10);
+// Load lại game khi thua gameover
+function reloadGame() {
+    score = 0;
+    level = 1;
+    maxLevel = 5;
+    live = 3
+    dx = 5;
+    dy = -5;
+    initBricks();
+}
+//var game = setInterval(draw, 10);
+draw();
 
 
