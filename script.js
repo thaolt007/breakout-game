@@ -23,9 +23,11 @@ var brickHeight = 20;
 var brickPadding = 10;
 var brickColumn = 8;
 var brickRow = 3;
-var brickTopOffset = 20;
-var brickLeftOffset = 25;
+var brickTopOffset = 30;
+var brickLeftOffset = 28;
 var bricks = [];
+// scores
+var score = 0;
 
 for(var r = 0; r < brickRow; r++) {
     bricks[r] = [];
@@ -84,11 +86,17 @@ function drawPaddle() {
 function isGameOver() {
     if(y + radius >= cvH) {
         if(x + radius < paddleX || x > paddleX + paddleWidth){
+            score = 0;
             return true;
         }else {
             y = cvH - paddleHeight - radius;
         }
     }
+    return false;
+}
+
+function isWin() {
+    if(score == brickRow * brickColumn) return true;
     return false;
 }
 
@@ -100,13 +108,23 @@ function collisionDectect() {
                     y-radius >= bricks[r][c].y && y-radius <= bricks[r][c].y + brickHeight) {
                     dy = -dy;
                     bricks[r][c].state = 0;
+                    ++score;
                 }
             }
         }
     }
 }
+
+function drawScore() {
+    ctx.beginPath();
+    ctx.fillText('Score: '+score.toString(), brickLeftOffset, brickTopOffset-5);
+    ctx.fillStyle = 'red';
+    ctx.font = '20pt Arial';
+    ctx.closePath();
+}
 function draw() {
     ctx.clearRect(0, 0, cvW, cvH);
+    drawScore();
     drawBall();
     drawPaddle();
     drawBricks();
@@ -128,8 +146,14 @@ function draw() {
     else if(paddleX < paddleMove) paddleX = 0;
 
     if(isGameOver()) {
-        console.log("game over");
-        alert("Game over");
+        console.log("Game Over");
+        //alert("Game over");
+        clearInterval(game);
+        document.location.reload();
+    }
+    if(isWin()) {
+        console.log("You Win");
+        alert("You Win!");
         clearInterval(game);
         document.location.reload();
     }
